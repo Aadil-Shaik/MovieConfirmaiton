@@ -5,12 +5,12 @@
         "bookmyshow": {
           "available": false,
           "error": "BookMyShow returned HTTP 403",
-          "last_checked": "2026-08-13T22:10:44Z",
+          "last_checked": "2026-08-13T23:05:50Z",
           "showtimes": []
         },
         "district": {
           "available": false,
-          "last_checked": "2026-08-13T22:10:44Z",
+          "last_checked": "2026-08-13T23:05:50Z",
           "showtimes": []
         }
       }
