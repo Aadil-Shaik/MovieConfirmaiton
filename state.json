@@ -1,0 +1,19 @@
+{
+  "rules": {
+    "spiderman-moa-saturday": {
+      "2026-08-15": {
+        "bookmyshow": {
+          "available": false,
+          "error": "BookMyShow returned HTTP 403",
+          "last_checked": "2026-08-13T08:43:35Z",
+          "showtimes": []
+        },
+        "district": {
+          "available": false,
+          "last_checked": "2026-08-13T08:43:35Z",
+          "showtimes": []
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+# Add, edit, or disable rules here. Each rule watches one movie at one cinema
+# for tickets on a specific date or weekday.
+#
+# Target options (use one):
+#   target_date: "2026-08-16"     # exact date (YYYY-MM-DD)
+#   target_weekday: saturday      # next matching weekday with no showtimes yet
+#
+# Optional bookmyshow_event_code if auto-discovery fails on BookMyShow.
+
+rules:
+  - id: spiderman-moa-saturday
+    enabled: true
+    movie: "Spider-Man: Brand New Day"
+    cinema:
+      name: "INOX Megaplex Mall of Asia"
+      district:
+        cinema_id: "1025975"
+        slug: "inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-in-bengaluru-CD1025975"
+      bookmyshow:
+        region: "BANG"
+        venue_code: "IMMO"
+        slug: "inox-megaplex-mall-of-asia-bangalore"
+    target_weekday: saturday
+    platforms:
+      - district
+      - bookmyshow
+    links:
+      district: "https://www.district.in/movies/inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-in-bengaluru-CD1025975"
+      bookmyshow: "https://in.bookmyshow.com/cinemas/bang/inox-megaplex-mall-of-asia-bangalore/buytickets/IMMO"
+
+  # Example: watch The Odyssey on a specific date at another cinema
+  # - id: odyssey-example
+  #   enabled: false
+  #   movie: "The Odyssey"
+  #   cinema:
+  #     name: "PVR Nexus Koramangala"
+  #     district:
+  #       cinema_id: "YOUR_CINEMA_ID"
+  #       slug: "your-district-cinema-slug"
+  #     bookmyshow:
+  #       region: "BANG"
+  #       venue_code: "VENUE"
+  #       slug: "your-bms-cinema-slug"
+  #   target_date: "2026-08-20"
+  #   platforms: [district, bookmyshow]
