@@ -18,13 +18,13 @@
         "bookmyshow": {
           "available": false,
           "error": "BookMyShow returned HTTP 403",
-          "last_checked": "2026-08-22T22:55:17Z",
+          "last_checked": "2026-08-22T23:19:27Z",
           "showtimes": []
         },
         "district": {
           "available": false,
           "error": "403 Client Error: Forbidden for url: https://www.district.in/movies/inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-in-bengaluru-CD1025975",
-          "last_checked": "2026-08-22T22:55:17Z",
+          "last_checked": "2026-08-22T23:19:27Z",
           "showtimes": []
         }
       }
