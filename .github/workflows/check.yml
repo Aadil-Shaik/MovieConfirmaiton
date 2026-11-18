@@ -1,9 +1,10 @@
 name: Ticket Availability Check
 
 on:
-  schedule:
-    # Every 5 minutes (GitHub's minimum). GitHub often starts scheduled runs late.
-    - cron: "*/5 * * * *"
+  # Schedule disabled: District returns HTTP 403 to GitHub's servers, so checks here always fail.
+  # To re-enable, uncomment (every 5 minutes is GitHub's minimum; runs often start late).
+  # schedule:
+  #   - cron: "*/5 * * * *"
   workflow_dispatch:
 
 concurrency:
