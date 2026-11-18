@@ -4,7 +4,7 @@ import argparse
 import sys
 import time
 from datetime import datetime
-from datetime import date
+
 
 from src.config import load_env_file, load_rules
 from src.engine import run_checks
@@ -50,11 +50,14 @@ def cmd_list_rules(_: argparse.Namespace) -> int:
 
 
 def cmd_test_alert(_: argparse.Namespace) -> int:
-    send_telegram_message(
-        "Movie Confirmation bot test\n\nIf you received this, Telegram alerts are configured correctly."
+    errors = notify(
+        "Movie ticket watcher: test alert",
+        "If you received this, alerts are configured correctly.",
     )
-    print("Test alert sent.")
-    return 0
+    for error in errors:
+        print(f"Channel failed - {error}")
+    print("Test alert sent." if not errors else "Test alert sent on at least one channel.")
+    return 1 if errors else 0
 
 
 def build_parser() -> argparse.ArgumentParser:
