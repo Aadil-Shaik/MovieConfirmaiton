@@ -19,6 +19,9 @@ def cmd_check(args: argparse.Namespace) -> int:
         print("Errors:")
         for error in summary["errors"]:
             print(f"  - {error}")
+    # Non-zero exit (red run on GitHub) when every check failed, e.g. the site blocked us.
+    if summary["checked"] and summary["failed"] == summary["checked"]:
+        return 1
     return 0
 
 

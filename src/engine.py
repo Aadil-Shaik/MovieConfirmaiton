@@ -113,9 +113,12 @@ def _run_listing_rule(rule: WatchRule, state: dict[str, Any], summary: dict[str,
         listings = find_listings(rule, skip)
     except Exception as exc:  # noqa: BLE001
         failures = bucket.get("consecutive_errors", 0) + 1
-        bucket["consecutive_errors"] = failures
-        bucket["last_error"] = str(exc)
+        # Stop counting at the threshold so a long outage doesn't change state.json
+        # (and trigger a git commit) on every run.
+        bucket["consecutive_errors"] = min(failures, ERROR_ALERT_THRESHOLD)
+        bucket["last_error"] = str(exc)[:200]
         summary["errors"].append(f"{rule.id}/district: {exc}")
+        summary["failed"] += 1
         if failures >= ERROR_ALERT_THRESHOLD and not bucket.get("error_alert_sent") and not dry_run:
             try:
                 notify(
@@ -208,7 +211,7 @@ def run_checks(today: date | None = None, dry_run: bool = False) -> dict[str, An
     today = today or date.today()
     rules = load_rules()
     state = load_state()
-    summary: dict[str, Any] = {"checked": 0, "alerts_sent": 0, "errors": []}
+    summary: dict[str, Any] = {"checked": 0, "alerts_sent": 0, "errors": [], "failed": 0}
     district.clear_cache()
 
     for rule in rules:
