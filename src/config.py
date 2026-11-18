@@ -35,6 +35,10 @@ def load_rules(path: Path | None = None) -> list[WatchRule]:
         if item.get("watch_until"):
             watch_until = date.fromisoformat(str(item["watch_until"]))
 
+        from_date = None
+        if item.get("from_date"):
+            from_date = date.fromisoformat(str(item["from_date"]))
+
         target_weekday = item.get("target_weekday")
         if target_weekday:
             target_weekday = str(target_weekday).lower()
@@ -58,6 +62,8 @@ def load_rules(path: Path | None = None) -> list[WatchRule]:
                 links={str(k): str(v) for k, v in (item.get("links") or {}).items()},
                 bms_event_code=item.get("bookmyshow_event_code"),
                 watch_until=watch_until,
+                match=[str(m) for m in (item.get("match") or [])],
+                from_date=from_date,
             )
         )
 

@@ -33,6 +33,12 @@ def movie_matches(candidate: str, target: str) -> bool:
     return left == right or left in right or right in left
 
 
+def title_matches_any(title: str, phrases: list[str]) -> bool:
+    """True if any phrase appears in the title as whole words (case/punctuation-insensitive)."""
+    padded = f" {normalize_text(title)} "
+    return any(f" {normalize_text(phrase)} " in padded for phrase in phrases if normalize_text(phrase))
+
+
 @dataclass
 class CinemaConfig:
     name: str
@@ -55,6 +61,23 @@ class WatchRule:
     links: dict[str, str] = field(default_factory=dict)
     bms_event_code: str | None = None
     watch_until: date | None = None
+    match: list[str] = field(default_factory=list)
+    from_date: date | None = None
+
+    @property
+    def watches_any_date(self) -> bool:
+        """No target date or weekday: alert as soon as the movie is listed at the cinema on any date."""
+        return not self.target_date and not self.target_weekday
+
+    @property
+    def uses_listing_mode(self) -> bool:
+        """District-only rules with no weekday: alert on first sight (no silent baseline)."""
+        return not self.target_weekday and self.platforms == ["district"]
+
+    def title_matches(self, title: str) -> bool:
+        if self.match:
+            return title_matches_any(title, self.match)
+        return movie_matches(title, self.movie)
 
     def resolve_target_dates(self, today: date, known_dates: list[date] | None = None) -> list[date]:
         del known_dates  # weekday rules always use the next upcoming weekday occurrence
@@ -80,6 +103,8 @@ class Showtime:
     time: str
     screen: str | None = None
     format: str | None = None
+    seats: str | None = None
+    sort_key: str | None = None
 
 
 @dataclass

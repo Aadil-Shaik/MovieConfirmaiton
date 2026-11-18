@@ -1,182 +1,102 @@
 # Movie Confirmation
 
-Poll **BookMyShow** and **District** on a schedule and send a **Telegram** alert the moment tickets you care about go live.
+Watches **District** cinema pages and sends a **Telegram + email** alert the moment a movie is listed at a specific cinema.
 
-This is a lightweight rule engine, not a mobile app. You add watch rules in `rules.yaml`, host the checker for free on **GitHub Actions**, and get pinged when a target date becomes bookable.
+Currently watching (see [`rules.yaml`](rules.yaml)):
 
-## What it does
+| Movie | Cinema | Show date watched |
+| --- | --- | --- |
+| Avengers: Doomsday | INOX Megaplex Mall of Asia | Sun 20 Dec 2026 |
+| Dune: Part Three | INOX Megaplex Mall of Asia | Sun 20 Dec 2026 |
+| Godzilla Minus Zero | PVR Aura Park Square, Whitefield | Fri 20 Nov 2026 |
 
-- Watches a movie at a specific cinema
-- Targets an exact date (`target_date`) or a weekday (`target_weekday`, e.g. `saturday`)
-- Checks District and/or BookMyShow
-- Sends Telegram only on the transition from **not available → available**
-- Remembers state in `state.json` so you are not spammed
+A rule with `target_date` alerts only when shows appear on that exact date. Shows on other dates are ignored.
 
-## Quick start
+## How it works
 
-### 1. Install locally
+1. Fetches the cinema's District page, which includes the list of bookable dates (`sessionDates`).
+2. For each bookable date, fetches `?fromdate=YYYY-MM-DD` and looks for the movie in that day's sessions.
+3. The first time the movie appears at that cinema, it sends **BOOKING OPEN** with showtimes, screen format, seats left and a booking link. Later, when more dates are added, it sends **New dates added**.
+4. Each date is alerted once (tracked in `state.json`). If sending fails, it retries on the next run.
+5. If District can't be reached for 6 runs in a row, it sends one **watcher can't reach District** alert so silence never means "broken".
+
+Only the showtime list is checked, not the page text. District pages mention upcoming movies in footers, and those mentions do not trigger alerts. `match` phrases stop look-alikes, so "Dune: Part Two" re-releases and "Godzilla x Kong" are not matched.
+
+District serves this data to plain HTTP requests, so no browser/Playwright is needed. BookMyShow returns HTTP 403 to scripts, so these rules don't use it. Both sites sell the same cinema inventory.
+
+## Setup (10 minutes)
 
 ```bash
-cd MovieConfirmaiton
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 copy .env.example .env
 ```
 
-### 2. Create a Telegram bot
+### Telegram
 
-1. Open Telegram and message `@BotFather`
-2. Run `/newbot` and copy the bot token
-3. Start a chat with your bot and send any message
-4. Visit `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates`
-5. Copy your `chat.id`
+1. Message `@BotFather` → `/newbot` → copy the token
+2. Send any message to your new bot
+3. Open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy `chat.id`
 
-Put both values in `.env`:
+### Gmail
 
-```env
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_ID=...
-```
+1. Turn on 2-Step Verification on your Google account
+2. Create an App Password at https://myaccount.google.com/apppasswords
+3. Put it in `EMAIL_APP_PASSWORD` (spaces are fine)
 
-Test it:
+Fill in `.env`, then:
 
 ```bash
-python main.py test-alert
+python main.py test-alert       # should arrive on Telegram and email
+python main.py check --dry-run  # prints what it would send, sends nothing
 ```
 
-### 3. Add a watch rule
+## Running it
 
-Edit [`rules.yaml`](rules.yaml). Example already included:
-
-```yaml
-rules:
-  - id: spiderman-moa-saturday
-    enabled: true
-    movie: "Spider-Man: Brand New Day"
-    cinema:
-      name: "INOX Megaplex Mall of Asia"
-      district:
-        cinema_id: "1025975"
-        slug: "inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-in-bengaluru-CD1025975"
-      bookmyshow:
-        region: "BANG"
-        venue_code: "IMMO"
-        slug: "inox-megaplex-mall-of-asia-bangalore"
-    target_weekday: saturday
-    platforms: [district, bookmyshow]
-    links:
-      district: "https://www.district.in/movies/inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-in-bengaluru-CD1025975"
-      bookmyshow: "https://in.bookmyshow.com/cinemas/bang/inox-megaplex-mall-of-asia-bangalore/buytickets/IMMO"
-```
-
-Run a check:
+### On your PC (fastest, works now)
 
 ```bash
-python main.py list-rules
-python main.py check --dry-run
-python main.py check
+python main.py watch            # checks every 5 minutes; keep the window open
 ```
 
-## Rule fields
+### Free on GitHub Actions (runs when your PC is off)
 
-| Field | Required | Description |
-| --- | --- | --- |
-| `id` | yes | Unique rule name |
-| `enabled` | no | Default `true` |
-| `movie` | yes | Movie title to match |
-| `cinema.name` | yes | Human-readable cinema name |
-| `cinema.district.cinema_id` | for District | Cinema ID from District URL/page |
-| `cinema.district.slug` | for District | Cinema slug from District URL |
-| `cinema.bookmyshow.region` | for BMS | e.g. `BANG`, `HYD`, `MUM` |
-| `cinema.bookmyshow.venue_code` | for BMS | Venue code from BMS URL |
-| `cinema.bookmyshow.slug` | for BMS | Cinema slug from BMS URL |
-| `target_date` | one of | Exact date `YYYY-MM-DD` |
-| `target_weekday` | one of | `monday` … `sunday` |
-| `platforms` | no | `district`, `bookmyshow`, or both |
-| `bookmyshow_event_code` | no | Optional BMS event code if page parsing fails |
-| `watch_until` | no | Stop checking after this date |
-| `links` | no | Booking links included in alerts |
+1. Push this repo to GitHub as a **public** repo (unlimited free minutes; secrets stay hidden)
+2. Settings → Secrets and variables → Actions → add `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `EMAIL_USER`, `EMAIL_APP_PASSWORD`, `EMAIL_TO`
+3. Actions → Ticket Availability Check → **Run workflow** once and check the log says `Errors:` is absent
 
-### Targeting a weekday
+It is scheduled every 5 minutes, but GitHub often starts runs 5–15 minutes late. If you run both the PC watcher and GitHub, you may get each alert twice, because they keep separate state.
 
-If you set `target_weekday: saturday`, the bot watches the next Saturday that is not yet listed. When Saturday showtimes for your movie appear, you get alerted.
-
-### Targeting a specific date
+## Adding a movie
 
 ```yaml
-target_date: "2026-08-20"
+- id: some-movie-some-cinema
+  movie: "Movie Title"
+  match: ["movie title"]          # whole-word phrases matched against District's title
+  cinema:
+    name: "Cinema name for alerts"
+    district:
+      cinema_id: "1022308"        # the number after CD in the URL
+      slug: "pvr-aura-park-square-whitefield-bengaluru-CD1022308"
+  from_date: "2026-11-18"         # ignore listings before this
+  watch_until: "2026-12-10"       # stop checking after this
+  platforms: [district]
+  links:
+    district: "https://www.district.in/movies/pvr-aura-park-square-whitefield-bengaluru-CD1022308"
 ```
 
-## Finding cinema IDs
+Find the cinema on District (e.g. via `district.in/movies/cinemas-in-bengaluru`) and copy the slug from its URL.
 
-### District
-
-Open the cinema page on District, for example:
-
-`https://www.district.in/movies/inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-in-bengaluru-CD1025975`
-
-- `cinema_id`: `1025975`
-- `slug`: everything after `/movies/`
-
-### BookMyShow
-
-Open the cinema booking page, for example:
-
-`https://in.bookmyshow.com/cinemas/bang/inox-megaplex-mall-of-asia-bangalore/buytickets/IMMO/20260815`
-
-- `region`: `bang` → use uppercase `BANG` in rules
-- `slug`: `inox-megaplex-mall-of-asia-bangalore`
-- `venue_code`: `IMMO`
-
-## Free hosting on GitHub Actions
-
-1. Push this folder to a GitHub repository
-2. Add repository secrets:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-3. Enable GitHub Actions
-4. The workflow in [`.github/workflows/check.yml`](.github/workflows/check.yml) runs every 10 minutes
-
-GitHub Actions is free for public repos and includes enough minutes for this use case. Scheduled runs can be delayed by a few minutes, but it is still much faster than manual checking.
-
-### Manual run
-
-In GitHub: **Actions → Ticket Availability Check → Run workflow**
+Rules can also use `target_date: "2026-08-20"` or `target_weekday: saturday` to watch one specific date, optionally with `bookmyshow` too.
 
 ## Commands
 
 ```bash
 python main.py list-rules
-python main.py check
-python main.py check --dry-run
+python main.py check [--dry-run]
+python main.py watch [--interval 300]
 python main.py test-alert
 ```
 
-## Notes
-
-- District is parsed from embedded page data and is generally reliable.
-- BookMyShow may block some datacenter IPs. GitHub Actions usually works; if not, add `bookmyshow_event_code` to the rule or rely on District alerts (both platforms share the same cinema inventory).
-- This tool only detects availability. It does not book tickets for you.
-- First run baseline: if tickets are already available when you add a rule, it records state without alerting so you do not get a false alarm.
-
-## Example: watch The Odyssey next time
-
-```yaml
-- id: odyssey-pvr-next
-  enabled: true
-  movie: "The Odyssey"
-  cinema:
-    name: "PVR Nexus Koramangala"
-    district:
-      cinema_id: "YOUR_ID"
-      slug: "your-district-slug"
-    bookmyshow:
-      region: "BANG"
-      venue_code: "YOUR_CODE"
-      slug: "your-bms-slug"
-  target_date: "2026-09-12"
-  platforms: [district, bookmyshow]
-```
-
-Disable or delete old rules by setting `enabled: false` or removing them from `rules.yaml`.
+This tool only detects availability. It does not book tickets.

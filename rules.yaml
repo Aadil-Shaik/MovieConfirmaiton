@@ -1,45 +1,71 @@
-# Add, edit, or disable rules here. Each rule watches one movie at one cinema
-# for tickets on a specific date or weekday.
+# Each rule watches one movie at one cinema.
 #
-# Target options (use one):
-#   target_date: "2026-08-16"     # exact date (YYYY-MM-DD)
-#   target_weekday: saturday      # next matching weekday with no showtimes yet
+# Modes (District-only rules alert the first time shows appear, even on the first run):
+#   target_date: "2026-12-20"   only that date (used below)
+#   no target date              any date; alerts again when new dates are added
+#   target_weekday: saturday    next upcoming Saturday (older mode, also supports BookMyShow)
 #
-# Optional bookmyshow_event_code if auto-discovery fails on BookMyShow.
+# match: phrases that must appear in District's title (whole words, case-insensitive).
+#   Keeps "Dune: Part Three" from matching a "Dune: Part Two" re-release, and
+#   "Godzilla Minus Zero" from matching "Godzilla x Kong".
+# from_date: (any-date rules) ignore listings before this date.
+# watch_until: stop checking after this date.
 
 rules:
-  - id: spiderman-moa-saturday
-    enabled: true
-    movie: "Spider-Man: Brand New Day"
+  - id: doomsday-moa
+    movie: "Avengers: Doomsday"
+    match: ["avengers doomsday"]
     cinema:
       name: "INOX Megaplex Mall of Asia"
       district:
         cinema_id: "1025975"
-        slug: "inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-in-bengaluru-CD1025975"
-      bookmyshow:
-        region: "BANG"
-        venue_code: "IMMO"
-        slug: "inox-megaplex-mall-of-asia-bangalore"
-    target_weekday: saturday
-    platforms:
-      - district
-      - bookmyshow
+        slug: "inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-CD1025975"
+    target_date: "2026-12-20"   # Sunday
+    watch_until: "2026-12-20"
+    platforms: [district]
     links:
-      district: "https://www.district.in/movies/inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-in-bengaluru-CD1025975"
-      bookmyshow: "https://in.bookmyshow.com/cinemas/bang/inox-megaplex-mall-of-asia-bangalore/buytickets/IMMO"
+      district: "https://www.district.in/movies/inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-CD1025975"
 
-  # Example: watch The Odyssey on a specific date at another cinema
-  # - id: odyssey-example
+  - id: dune3-moa
+    movie: "Dune: Part Three"
+    match: ["dune part three", "dune part 3", "dune 3"]
+    cinema:
+      name: "INOX Megaplex Mall of Asia"
+      district:
+        cinema_id: "1025975"
+        slug: "inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-CD1025975"
+    target_date: "2026-12-20"   # Sunday
+    watch_until: "2026-12-20"
+    platforms: [district]
+    links:
+      district: "https://www.district.in/movies/inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-CD1025975"
+
+  - id: godzilla-minus-zero-park-square
+    movie: "Godzilla Minus Zero"
+    match: ["godzilla minus zero", "godzilla minus 0"]
+    cinema:
+      name: "PVR Aura Park Square, Whitefield"
+      district:
+        cinema_id: "1022308"
+        slug: "pvr-aura-park-square-whitefield-bengaluru-CD1022308"
+    target_date: "2026-11-20"   # Friday, release day
+    watch_until: "2026-11-20"
+    platforms: [district]
+    links:
+      district: "https://www.district.in/movies/pvr-aura-park-square-whitefield-bengaluru-CD1022308"
+
+  # Example of a specific-date rule (also supports BookMyShow, which currently 403s scripts):
+  # - id: spiderman-moa-saturday
   #   enabled: false
-  #   movie: "The Odyssey"
+  #   movie: "Spider-Man: Brand New Day"
   #   cinema:
-  #     name: "PVR Nexus Koramangala"
+  #     name: "INOX Megaplex Mall of Asia"
   #     district:
-  #       cinema_id: "YOUR_CINEMA_ID"
-  #       slug: "your-district-cinema-slug"
+  #       cinema_id: "1025975"
+  #       slug: "inox-megaplex-mall-of-asia-byatarayanapura-bengaluru-CD1025975"
   #     bookmyshow:
   #       region: "BANG"
-  #       venue_code: "VENUE"
-  #       slug: "your-bms-cinema-slug"
-  #   target_date: "2026-08-20"
+  #       venue_code: "IMMO"
+  #       slug: "inox-megaplex-mall-of-asia-bangalore"
+  #   target_weekday: saturday
   #   platforms: [district, bookmyshow]

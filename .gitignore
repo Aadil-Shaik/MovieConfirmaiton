@@ -1,4 +1,11 @@
+# Secrets: never commit. Real values live here locally and in GitHub Actions secrets.
 .env
+.env.*
+!.env.example
+*.secret
+secrets/
+
+# Python
 .venv/
 venv/
 __pycache__/
